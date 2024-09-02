@@ -1,0 +1,38 @@
+@server_HostAddress = http://localhost:5286
+
+GET {{server_HostAddress}}/api/user/
+Accept: application/json
+
+###
+
+GET {{server_HostAddress}}/api/user/1
+Accept: application/json
+
+###
+
+POST {{server_HostAddress}}/api/user/
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "Test"
+}
+
+###
+
+PATCH {{server_HostAddress}}/api/user/3
+Content-Type: application/json
+
+{
+  "id": 3,
+  "firstName": "Ilya",
+  "lastName": "Churkenberg"
+}
+
+###
+
+
+DELETE {{server_HostAddress}}/api/user/2
+Accept: application/json
+
+###

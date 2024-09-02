@@ -1,0 +1,16 @@
+# Node.js
+/client/node_modules
+/client/dist
+
+# .NET
+/server/bin/
+/server/obj/
+/server/*.user
+/server/*.suo
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Other
+.vs/
