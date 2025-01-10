@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using server.Models;
-using server.Services;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using AutoMapper;
+using server.Services.Interfaces;
+using server.DTOs;
 
 namespace server.Controllers
 {
@@ -11,61 +10,66 @@ namespace server.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UserService _service;
-        public UserController(UserService service) => _service = service;
+        private readonly IUserService _userService;
+        private readonly IMapper _mapper;
+
+        public UserController(IUserService userService, IMapper mapper) 
+        {
+            _userService = userService;
+            _mapper = mapper;
+        }
 
         [HttpGet]
-        public async Task<ActionResult<List<User>>> Get()
+        public async Task<ActionResult<List<UserDTO>>> Get()
         {
-            var users = await _service.Get();
-            Console.WriteLine(users);
-            return Ok(users);
+            var users = await _userService.Get();
+            var userDto = _mapper.Map<List<UserDTO>>(users);
+
+            return Ok(userDto);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetById(int id)
+        public async Task<ActionResult<UserDTO>> GetById(int id)
         {
-            User? user = await _service.GetById(id);
+            var user = await _userService.GetById(id);
+            var userDto = _mapper.Map<UserDTO>(user);
 
-            if (user is not null) return Ok(user);
-            else return NotFound();
+            return user is not null ? Ok(userDto) : NotFound();
         }
 
         [HttpPost]
-        public async Task<ActionResult<User>> Post(User newUser)
+        public async Task<ActionResult<UserDTO>> Create(UserDTO newUserDto)
         {
-            Console.WriteLine(newUser);
-            var user = await _service.Create(newUser);
-            return CreatedAtAction(nameof(Post), new { id = newUser.Id }, newUser);
+            Console.WriteLine(newUserDto);
+
+            var newUser = _mapper.Map<User>(newUserDto);
+            var createdUser = await _userService.Create(newUser);
+            var createdUserDto = _mapper.Map<UserDTO>(createdUser);
+
+            return CreatedAtAction(nameof(GetById), new { id = createdUserDto.Id }, createdUserDto);
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Patch(int id, User user)
+        public async Task<IActionResult> Patch(int id, UserUpdateDTO userUpdateDto)
         {
-            if(id != user.Id) return BadRequest();
+            var user = await _userService.GetById(id);
 
-            var userToUpdate = await _service.GetById(id);
+            if (user is null) return NotFound();
 
-            if (userToUpdate is not null)
-            {
-                await _service.UpdateById(id, user);
-                return NoContent();
-            }
+            _mapper.Map(userUpdateDto, user);
 
-            return NotFound();
+            await _userService.UpdateById(id, user);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await _service.GetById(id);
-            
-            if(user is not null)
-            {
-                await _service.DeleteById(id);
-                return Ok();
-            }
-            return NotFound();
+            var user = await _userService.GetById(id);
+            if (user is null) return NotFound();
+
+            await _userService.DeleteById(id);
+            return Ok();
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using server.Data;
 using server.Models;
+using server.Services.Interfaces;
 
-namespace server.Services
+namespace server.Services.Implementations
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly CrudContext _context;
         public UserService(CrudContext context) => _context = context;
@@ -30,25 +30,22 @@ namespace server.Services
 
         public async Task UpdateById(int id, User user)
         {
-            var updateToUser = await _context.Users.FindAsync(id);
-            
-            if(updateToUser is not null)
-            {
-                updateToUser.FirstName = user.FirstName;
-                updateToUser.LastName = user.LastName;
-                updateToUser.UpdatedAt = DateTime.UtcNow;
-                _context.Users.Update(updateToUser);
-                await _context.SaveChangesAsync();
-            }
+            var existingUser = await _context.Users.FindAsync(id);
+            if (existingUser is null) return;
+
+            existingUser.FirstName = user.FirstName ?? existingUser.FirstName;
+            existingUser.LastName = user.LastName ?? existingUser.LastName;
+            existingUser.UpdatedAt = DateTime.UtcNow;
+            _context.Users.Update(existingUser);
+            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteById(int id)
         {
-            var userToDelete = await _context.Users.FindAsync(id);
-
-            if(userToDelete is not null)
+            var user = await _context.Users.FindAsync(id);
+            if(user is not null)
             {
-                 _context.Users.Remove(userToDelete);
+                _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
             }
         }
